@@ -1,0 +1,16 @@
+body {
+  background-color: lightblue;
+  margin: 0px;
+  padding: 0px;
+	overflow: hidden;
+	display: block;
+}
+
+canvas {
+	overflow: hidden;
+	display: block;
+	height: 100vh;
+	position: absolute;
+	margin: 0px;
+	padding: 0px;
+}
