@@ -1,6 +1,4 @@
 // ============================================================
-// GENERATIVE ZELLIJ FOR FIGMA SCRIPTER
-// ============================================================
 // Press space in Scripter to regenerate with new parameters
 // Edit parameters below to customize your design
 // ============================================================
@@ -1610,6 +1608,8 @@ function createLines(num: number): { lines: Line[]; groups: Point[][] } {
     }
   }
 
+	// Add this INSIDE the createLines function, after makeRandom2x2:
+
 	function makeRandomStar(n: number) {
 		const ax = Math.floor(Math.random() * (n - 4)) + 2;
 		const ay = Math.floor(Math.random() * (n - 4)) + 2;
@@ -1836,7 +1836,8 @@ function createFigmaShape(M: Affine, shape: any, colors: { r: number; g: number;
   return vector;
 }
 
-function drawTile(M: Affine, t: Point[], frame: FrameNode, colors: { r: number; g: number; b: number }[]) {
+function drawTile(M: Affine, t: Point[], colors: { r: number; g: number; b: number }[]): VectorNode[] {
+  const vectors: VectorNode[] = [];
   let lt = [...t];
   const rl = Math.floor(Math.random() * lt.length);
   lt = lt.slice(rl).concat(lt.slice(0, rl));
@@ -1867,7 +1868,7 @@ function drawTile(M: Affine, t: Point[], frame: FrameNode, colors: { r: number; 
     
     const fillColor = randomizeColor(colors[2], SHIMMER);
     vector.fills = [{ type: 'SOLID', color: fillColor }];
-    frame.appendChild(vector);
+		vectors.push(vector);
     return;
   }
 
@@ -1881,8 +1882,9 @@ function drawTile(M: Affine, t: Point[], frame: FrameNode, colors: { r: number; 
 
   for (const sh of cl.shapes) {
     const vector = createFigmaShape(T, sh, colors);
-    frame.appendChild(vector);
+		vectors.push(vector);
   }
+	return vectors;
 }
 
 // ============ MAIN RENDER FUNCTION ============
@@ -1931,21 +1933,18 @@ function render() {
   const sbox = makeBox(PADDING, PADDING, PATTERN_SIZE, PATTERN_SIZE);
   const M = fillBox(cbox, sbox, false);
 
-  // Create frame
-  const frame = figma.createFrame();
-  frame.name = "Zellij Pattern";
-  frame.resize(FRAME_SIZE, FRAME_SIZE);
-  frame.fills = [{ type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.95 } }];
-
-  // Draw all tiles
+  const allVectors: VectorNode[] = [];
   for (const t of tiles) {
-    drawTile(M, t.path, frame, colors);
+    const vectors = drawTile(M, t.path, colors);
+    allVectors.push(...vectors);
   }
 
-  // Add to canvas
-  figma.currentPage.appendChild(frame);
-  figma.currentPage.selection = [frame];
-  figma.viewport.scrollAndZoomIntoView([frame]);
+  for (const v of allVectors) {
+    figma.currentPage.appendChild(v);
+  }
+  
+  // figma.currentPage.selection = allVectors;
+  figma.viewport.scrollAndZoomIntoView(allVectors);
 }
 
 // ============ RUN IT ============
