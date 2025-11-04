@@ -6,7 +6,7 @@
 // ============ PARAMETERS (edit these) ============
 const LINE_DENSITY = 10;  // 6, 10, or 20
 const NUM_LINES = 25;     //9, 25, or 40
-const FOCUS = 'None';     // 'None', 'Eight', or 'Sixteen'
+const FOCUS = 'Sixteen';     // 'None', 'Eight', or 'Sixteen'
 const SHIMMER = -1;       // -1 for off, or 2-5 for shimmer intensity
 
 const PATTERN_SIZE = 800; // Size of the pattern itself
@@ -1887,6 +1887,23 @@ function drawTile(M: Affine, t: Point[], colors: { r: number; g: number; b: numb
 	return vectors;
 }
 
+// Finds empty space on canvas by looking at rightmost edge of all existing nodes
+// Returns coordinates where next pattern should be placed
+function findEmptySpace(): { x: number; y: number } {
+  const nodes = figma.currentPage.children;
+  let maxX = 0;
+  
+  for (const node of nodes) {
+    const rightEdge = node.x + node.width;
+    if (rightEdge > maxX) {
+      maxX = rightEdge;
+    }
+  }
+  
+  // Shift to the right and return coordinates
+  return { x: maxX, y: 0 };
+}
+
 // ============ MAIN RENDER FUNCTION ============
 function render() {
   const colors = initColours();
@@ -1932,6 +1949,8 @@ function render() {
   const cbox = makeBox(xmin, ymin, xmax - xmin, ymax - ymin);
   const sbox = makeBox(PADDING, PADDING, PATTERN_SIZE, PATTERN_SIZE);
   const M = fillBox(cbox, sbox, false);
+	  // Find whitespace to the right of existing patterns
+  const position = findEmptySpace();
 
   const allVectors: VectorNode[] = [];
   for (const t of tiles) {
@@ -1939,7 +1958,10 @@ function render() {
     allVectors.push(...vectors);
   }
 
+  // Add vectors to canvas at the calculated position
   for (const v of allVectors) {
+    v.x = v.x + position.x;
+    v.y = v.y + position.y;
     figma.currentPage.appendChild(v);
   }
   
