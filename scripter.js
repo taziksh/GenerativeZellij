@@ -7,11 +7,13 @@
 
 // ============ PARAMETERS (edit these) ============
 const LINE_DENSITY = 10;  // 6, 10, or 20
-const NUM_LINES = 25;     // 9, 25, or 40
+const NUM_LINES = 25;     //9, 25, or 40
 const FOCUS = 'None';     // 'None', 'Eight', or 'Sixteen'
 const SHIMMER = -1;       // -1 for off, or 2-5 for shimmer intensity
 
-const FRAME_SIZE = 800;   // Output size in pixels
+const PATTERN_SIZE = 800; // Size of the pattern itself
+const FRAME_SIZE = 1600;  // Size of the Figma frame
+const PADDING = (FRAME_SIZE - PATTERN_SIZE) / 2; // Padding around frame
 
 // ============ TYPES ============
 type Point = { x: number; y: number };
@@ -1608,10 +1610,68 @@ function createLines(num: number): { lines: Line[]; groups: Point[][] } {
     }
   }
 
+	function makeRandomStar(n: number) {
+		const ax = Math.floor(Math.random() * (n - 4)) + 2;
+		const ay = Math.floor(Math.random() * (n - 4)) + 2;
+
+		const plan = [
+			{ idx: 4 * n + 7 + ax + ay, keep: false },
+			{ idx: 4 * n + 6 + ax + ay, keep: true },
+			{ idx: 4 * n + 5 + ax + ay, keep: false },
+			{ idx: 4 * n + 4 + ax + ay, keep: false },
+			{ idx: 4 * n + 3 + ax + ay, keep: false },
+			{ idx: 4 * n + 2 + ax + ay, keep: true },
+			{ idx: 4 * n + 1 + ax + ay, keep: false },
+			{ idx: 3 * n + 5 + ax - ay, keep: false },
+			{ idx: 3 * n + 4 + ax - ay, keep: true },
+			{ idx: 3 * n + 3 + ax - ay, keep: false },
+			{ idx: 3 * n + 2 + ax - ay, keep: false },
+			{ idx: 3 * n + 1 + ax - ay, keep: false },
+			{ idx: 3 * n + 0 + ax - ay, keep: true },
+			{ idx: 3 * n - 1 + ax - ay, keep: false },
+			{ idx: n + 1 + ay + 2, keep: true },
+			{ idx: n + 1 + ay + 1, keep: false },
+			{ idx: n + 1 + ay, keep: false },
+			{ idx: n + 1 + ay - 1, keep: true },
+			{ idx: ax + 2, keep: true },
+			{ idx: ax + 1, keep: false },
+			{ idx: ax, keep: false },
+			{ idx: ax - 1, keep: true }
+		];
+
+		for (const step of plan) {
+			if (step.keep) {
+				keep_lines.push(all_lines[step.idx]);
+			}
+			all_lines.splice(step.idx, 1);
+		}
+
+		groups.push([
+			makePoint(2 * ay + 1, 2 * ax - 3),
+			makePoint(2 * ay - 2, 2 * ax - 2),
+			makePoint(2 * ay, 2 * ax - 2),
+			makePoint(2 * ay + 2, 2 * ax - 2),
+			makePoint(2 * ay + 4, 2 * ax - 2),
+			makePoint(2 * ay - 2, 2 * ax),
+			makePoint(2 * ay + 4, 2 * ax),
+			makePoint(2 * ay - 3, 2 * ax + 1),
+			makePoint(2 * ay + 5, 2 * ax + 1),
+			makePoint(2 * ay - 2, 2 * ax + 2),
+			makePoint(2 * ay + 4, 2 * ax + 2),
+			makePoint(2 * ay - 2, 2 * ax + 4),
+			makePoint(2 * ay, 2 * ax + 4),
+			makePoint(2 * ay + 2, 2 * ax + 4),
+			makePoint(2 * ay + 4, 2 * ax + 4),
+			makePoint(2 * ay + 1, 2 * ax + 5)
+		]);
+	}
+
   makeAllLines(LINE_DENSITY);
   if (FOCUS === 'Eight') {
     makeRandom2x2(LINE_DENSITY);
-  }
+  } else if (FOCUS === 'Sixteen') {
+		makeRandomStar(LINE_DENSITY);
+	}
 
   num -= keep_lines.length;
 
@@ -1868,7 +1928,7 @@ function render() {
   }
 
   const cbox = makeBox(xmin, ymin, xmax - xmin, ymax - ymin);
-  const sbox = makeBox(0, 0, FRAME_SIZE, FRAME_SIZE);
+  const sbox = makeBox(PADDING, PADDING, PATTERN_SIZE, PATTERN_SIZE);
   const M = fillBox(cbox, sbox, false);
 
   // Create frame
