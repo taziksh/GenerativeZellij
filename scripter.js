@@ -1890,18 +1890,19 @@ function drawTile(M: Affine, t: Point[], colors: { r: number; g: number; b: numb
 // Finds empty space on canvas by looking at rightmost edge of all existing nodes
 // Returns coordinates where next pattern should be placed
 function findEmptySpace(): { x: number; y: number } {
-  const nodes = figma.currentPage.children;
+  const allNodes = figma.currentPage.findAll(node => node.type === "VECTOR");
+  
   let maxX = 0;
   
-  for (const node of nodes) {
+  for (const node of allNodes) {
     const rightEdge = node.x + node.width;
     if (rightEdge > maxX) {
       maxX = rightEdge;
     }
   }
   
-  // Shift to the right and return coordinates
-  return { x: maxX, y: 0 };
+  const spacing = maxX > 0 ? 10 : 0;
+  return { x: maxX + spacing, y: 0 };
 }
 
 // ============ MAIN RENDER FUNCTION ============
@@ -1964,9 +1965,16 @@ function render() {
     v.y = v.y + position.y;
     figma.currentPage.appendChild(v);
   }
-  
+
+// Find all vectors on the page, including previous runs
+const allVectorsOnPage = figma.currentPage.findAll(node => node.type === "VECTOR") as VectorNode[];
+
+// Zoom to show everything
+if (allVectorsOnPage.length > 0) {
+  figma.viewport.scrollAndZoomIntoView(allVectorsOnPage);
+}  
   // figma.currentPage.selection = allVectors;
-  figma.viewport.scrollAndZoomIntoView(allVectors);
+  // figma.viewport.scrollAndZoomIntoView(allVectors);
 }
 
 // ============ RUN IT ============
